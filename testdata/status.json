@@ -1,0 +1,15 @@
+{
+ "kind": "youtube#videoListResponse",
+ "etag": "\"PsChdkLfsD-u3yuH7KChIH1CRFg/AEYavnKDxhoyOgrFZODmDJK2PrY\"",
+ "items": [
+  {
+   "id": "9bZkp7q19f0",
+   "kind": "youtube#video",
+   "etag": "\"PsChdkLfsD-u3yuH7KChIH1CRFg/pdkHAKIZNUQtQLBYr29RZMcbMRc\"",
+   "status": {
+    "uploadStatus": "processed",
+    "privacyStatus": "public"
+   }
+  }
+ ]
+}

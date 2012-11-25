@@ -1,0 +1,19 @@
+{
+ "kind": "youtube#videoListResponse",
+ "etag": "\"PsChdkLfsD-u3yuH7KChIH1CRFg/W89rH3fzpRJtZGRN0ZN6WQXEmjw\"",
+ "items": [
+  {
+   "id": "9bZkp7q19f0",
+   "kind": "youtube#video",
+   "etag": "\"PsChdkLfsD-u3yuH7KChIH1CRFg/XBXhNwq2FUXvjbCqO2l-B21de6Y\"",
+   "contentDetails": {
+    "duration": "PT4M13S",
+    "regionRestriction": {
+     "blocked": [
+      "DE"
+     ]
+    }
+   }
+  }
+ ]
+}

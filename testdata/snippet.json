@@ -1,0 +1,29 @@
+{
+ "kind": "youtube#videoListResponse",
+ "etag": "\"PsChdkLfsD-u3yuH7KChIH1CRFg/IQM00YmD0HUyO2TWdbjGk9Oe-io\"",
+ "items": [
+  {
+   "id": "9bZkp7q19f0",
+   "kind": "youtube#video",
+   "etag": "\"PsChdkLfsD-u3yuH7KChIH1CRFg/GGEez890XrzyNe-nFAK1OaA3S-g\"",
+   "snippet": {
+    "publishedAt": "2012-07-15T07:46:32.000Z",
+    "channelId": "UCrDkAvwZum-UTjHmzDI2iIw",
+    "title": "PSY - GANGNAM STYLE (강남스타일) M/V",
+    "description": "PSY - Gangnam Style (강남스타일) \n▶ NOW available on iTunes: http://Smarturl.it/psygangnam\n▶ Official PSY Online Store US & International : http://psy.shop.bravadousa.com/\n▶ About PSY from YG Ent.: http://smarturl.it/YGfamilyAboutPSY\n▶ PSY's Products on eBay: http://stores.ebay.com/ygentertainment\n▶ YG-eShop: http://www.ygeshop.com\n \nFor More Information @\nhttp://www.facebook.com/officialpsy\nhttp://twitter.com/psy_oppa\nhttp://twitter.com/ygent_official\nhttp://me2day.net/psyfive\nhttp://www.psypark.com\nApp Store: http://goo.gl/l9TU6\nGoogle Play: http://goo.gl/UiEn1\n\n© YG Entertainment Inc. All rights reserved.",
+    "thumbnails": {
+     "default": {
+      "url": "https://i.ytimg.com/vi/9bZkp7q19f0/default.jpg"
+     },
+     "medium": {
+      "url": "https://i.ytimg.com/vi/9bZkp7q19f0/mqdefault.jpg"
+     },
+     "high": {
+      "url": "https://i.ytimg.com/vi/9bZkp7q19f0/hqdefault.jpg"
+     }
+    },
+    "categoryId": "10"
+   }
+  }
+ ]
+}
