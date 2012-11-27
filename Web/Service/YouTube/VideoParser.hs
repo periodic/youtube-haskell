@@ -24,7 +24,7 @@ instance FromJSON Video where
                         <*> optional (v .: "player")
                         <*> optional (v .: "statistics")
                         <*> optional (v .: "status")
-                        <*> optional (v .: "topicDetails")
+                        <*> optional (v .: "topicDetails" >>= (.: "topicIds"))
     parseJSON _ = mzero
 
 instance FromJSON Snippet where
@@ -81,7 +81,3 @@ instance FromJSON VideoListResponse where
                         <*> v .: "etag"
                         <*> v .: "items"
     parseJSON _ = mzero
-
-parseFile path = BS.readFile path >>= return . parse (fromJSON <$> json)
-
-parseData input = parse (fromJSON <$> json) input

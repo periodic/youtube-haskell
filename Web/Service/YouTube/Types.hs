@@ -2,9 +2,10 @@
 module Web.Service.YouTube.Types where
 
 import Data.Default
-import Data.ByteString.Lazy as BS
+import Data.ByteString.Char8 as BS
 import Data.Map (Map)
 import qualified Data.Map as M
+
 data YouTube = YouTube {
     apiKey :: ByteString
     } deriving (Show, Eq, Read, Ord)
@@ -55,11 +56,11 @@ data RegionRestriction = RegionRestriction { allowed :: [String]
 
 data Player = Player { embedHtml :: String } deriving (Show)
 
-data Statistics = Statistics { viewCount :: Integer
-                             , likeCount :: Integer
-                             , dislikeCount :: Integer
-                             , favoriteCount :: Integer
-                             , commentCount :: Integer
+data Statistics = Statistics { viewCount :: String -- These are strings... how to parse them to integers inside the aeson Monad...
+                             , likeCount :: String
+                             , dislikeCount :: String
+                             , favoriteCount :: String
+                             , commentCount :: String
                              } deriving (Show)
 
 data Status = Status { uploadStatus :: String -- Appears required
