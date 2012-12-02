@@ -1,7 +1,7 @@
-module Web.Service.YouTube.VideoParserTest where
+module Web.Google.YouTube.VideoParserTest where
 
-import Web.Service.YouTube.Types
-import Web.Service.YouTube.VideoParser
+import Web.Google.YouTube.Types
+import Web.Google.YouTube.VideoParser
 import Text.Printf
 
 import qualified Data.Attoparsec as P

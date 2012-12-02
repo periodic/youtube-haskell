@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Web.Service.YouTube ( YouTube
-                           , apiKey
-                           ) where
+module Web.Google.YouTube ( YouTube
+                          , apiKey
+                          ) where
 
 import Network.HTTP.Conduit ()
 

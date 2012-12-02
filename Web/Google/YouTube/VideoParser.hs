@@ -1,17 +1,19 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Web.Service.YouTube.VideoParser where
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
+module Web.Google.YouTube.VideoParser where
 
+import Control.Applicative
+import Control.Monad
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Attoparsec
+import qualified Data.ByteString.Char8 as BS
 import Data.Map (Map)
 import qualified Data.Map as M
-import Control.Monad
-import Control.Applicative
-import qualified Data.ByteString as BS
 import Data.Traversable as T
+import Web.Google.API.Rest
 
-import Web.Service.YouTube.Types
+import Web.Google.YouTube.Types
 
 
 instance FromJSON Video where
@@ -81,3 +83,11 @@ instance FromJSON VideoListResponse where
                         <*> v .: "etag"
                         <*> v .: "items"
     parseJSON _ = mzero
+
+instance GoogleApiRequest VideoListRequest VideoListResponse where
+    getPath = const "/youtube/v3/videos"
+    getQuery vlr = [ ("id", Just . videoId $ vlr)
+                   , ("key", Just . key $ vlr)
+                   , ("part", Just . BS.intercalate "," . map (BS.pack . show) . parts $ vlr)
+                   ]
+    getMethod = const methodGet
