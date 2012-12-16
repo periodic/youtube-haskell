@@ -1,4 +1,4 @@
-module Web.Google.YouTube.VideoParserTest where
+module Main where
 
 import Web.Google.YouTube.Types
 import Web.Google.YouTube.VideoParser
@@ -8,6 +8,8 @@ import qualified Data.Attoparsec as P
 import qualified Data.Aeson as Json
 import qualified Data.ByteString as BS
 import Control.Applicative
+
+import System.Exit (exitFailure, exitSuccess)
 
 import Data.Maybe
 
@@ -31,16 +33,20 @@ noSection :: (Video -> Maybe a) -> VideoListResponse -> Bool
 noSection section = not . hasSection section
 
 main = do
-    mapM_ runTest [ ("testdata/empty.json", noSection snippet)
-                  , ("testdata/snippet.json", hasSection snippet)
-                  , ("testdata/contentDetails.json", hasSection contentDetails)
-                  , ("testdata/player.json", hasSection player)
-                  , ("testdata/statistics.json", hasSection statistics)
-                  , ("testdata/status.json", hasSection status)
-                  , ("testdata/topicDetails.json", hasSection topicDetails)
-                  ]
+    testResults <- mapM runTest [ ("testdata/empty.json", noSection snippet)
+                                , ("testdata/snippet.json", hasSection snippet)
+                                , ("testdata/contentDetails.json", hasSection contentDetails)
+                                , ("testdata/player.json", hasSection player)
+                                , ("testdata/statistics.json", hasSection statistics)
+                                , ("testdata/status.json", hasSection status)
+                                , ("testdata/topicDetails.json", hasSection topicDetails)
+                                ]
+    if and testResults
+        then exitSuccess
+        else exitFailure
     where
         runTest (path, test) = do
             result <- expect path test
             printf "%s: %s\n" path (show result)
+            return result
 

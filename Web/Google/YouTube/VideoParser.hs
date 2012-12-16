@@ -83,11 +83,3 @@ instance FromJSON VideoListResponse where
                         <*> v .: "etag"
                         <*> v .: "items"
     parseJSON _ = mzero
-
-instance GoogleApiRequest VideoListRequest VideoListResponse where
-    getPath = const "/youtube/v3/videos"
-    getQuery vlr = [ ("id", Just . videoId $ vlr)
-                   , ("key", Just . key $ vlr)
-                   , ("part", Just . BS.intercalate "," . map (BS.pack . show) . parts $ vlr)
-                   ]
-    getMethod = const methodGet

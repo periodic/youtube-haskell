@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, MultiParamTypeClasses  #-}
+{-# LANGUAGE OverloadedStrings  #-}
 module Web.Google.YouTube.Types where
 
 import Data.ByteString (ByteString)
@@ -10,14 +10,8 @@ import qualified Data.Map as M
 import Network.HTTP.Types (methodGet)
 import Web.Google.API.Rest
 
-data YouTube = YouTube {
-    apiKey :: ByteString
-    } deriving (Show, Eq, Read, Ord)
-
-instance Default YouTube where
-    def = YouTube ""
-
-data VideoId = String
+type APIKey = ByteString
+type VideoId = String
 
 data VideoInfoPart = SnippetPart
                    | ContentDetailsPart
@@ -80,14 +74,13 @@ data Status = Status { uploadStatus :: String -- Appears required
                      , privacyStatus :: String -- Appears required
                      } deriving (Show)
 
+-- https://www.googleapis.com/youtube/v3/videos?id=9bZkp7q19f0&key=AIzaSyC6mnIp_OtG4TEVIdA2WzQViAcU4lAIa4Q&part='$part
+data VideoListRequest = VideoListRequest { videoId :: [VideoId]
+                                         , parts :: [VideoInfoPart]
+                                         } deriving (Show)
 data VideoListResponse = VideoListResponse { vlr_kind :: String
                                            , vlr_etag :: String
                                            , vlr_items :: [Video]
                                            } deriving (Show)
 
-type APIKey = ByteString
--- https://www.googleapis.com/youtube/v3/videos?id=9bZkp7q19f0&key=AIzaSyC6mnIp_OtG4TEVIdA2WzQViAcU4lAIa4Q&part='$part
-data VideoListRequest = VideoListRequest { videoId :: ByteString
-                                         , key :: APIKey
-                                         , parts :: [VideoInfoPart]
-                                         } deriving (Show)
+
