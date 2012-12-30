@@ -12,9 +12,35 @@ import qualified Data.ByteString.Char8 as C8
 import Data.Conduit
 import Data.Conduit.Attoparsec
 import Data.Map (Map)
-import Network.HTTP.Conduit
+import Network.HTTP.Conduit hiding (def)
+import qualified Network.HTTP.Conduit as HTTP
 import Network.HTTP.Types
 import Data.Default
+
+class GoogleApi m where
+    request :: (MonadResource m, MonadBaseControl IO m, GoogleApiRequest a b) => a -> Manager -> m (Maybe b)
+    getConfig :: m GoogleApiConfig
+
+newtype GoogleApiT m a = GoogleApiT { runGoogleApiT :: GoogleApiConfig -> m a }
+
+instance GoogleApi (GoogleApiT m) where
+    getConfig = GoogleApiT (\conf -> return conf)
+    request api req manager = do
+        conf <- getConfig
+        let request = buildHttpRequest conf req
+        bodySource <- responseBody <$> http request manager
+        parsedBody <- bodySource $$+- sinkParser (Json.fromJSON <$> Json.json)
+        case parsedBody of
+            Json.Success resp -> return $ Just resp
+            _                 -> return Nothing
+
+
+instance Monad m => Monad (GoogleApiT m) where
+    return a = GoogleApiT $ \conf -> return a
+    x >>= f  = GoogleApiT $ \conf -> do
+        x_val <- runGoogleApiT x conf
+        runGoogleApiT (f x_val) conf
+
 
 data GoogleApiConfig = GApiConf {
     apiKey :: BS.ByteString
@@ -24,14 +50,22 @@ instance Default GoogleApiConfig where
     def = GApiConf ""
 
 class (Json.FromJSON b) => GoogleApiRequest a b | a -> b where
-    requiresAuth :: a -> Bool
-    requiresAuth _ = False
     getPath :: a -> String
     getQuery :: a -> Query
     getMethod :: a -> Method
 
+class (Json.FromJSON b) => AuthenticatedGoogleApiRequest a b | a -> b where
+    getAuthedPath :: a -> String
+    getAuthedQuery :: a -> Query
+    getAuthedMethod :: a -> Method
+
+instance (AuthenticatedGoogleApiRequest a b) => GoogleApiRequest a b where
+    getPath = getAuthedPath
+    getQuery = getAuthedQuery
+    getMethod = getAuthedMethod
+
 buildHttpRequest :: (GoogleApiRequest a b) => GoogleApiConfig -> a -> Request m
-buildHttpRequest api req = Network.HTTP.Conduit.def { method = getMethod req
+buildHttpRequest api req = HTTP.def { method = getMethod req
                                , host = "www.googleapis.com"
                                , port = 443
                                , secure = True
