@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
 {-# LANGUAGE FlexibleContexts #-}
-module Web.Google.API.Rest (simpleRequest, httpRequest, GoogleApiRequest(..), methodGet, methodPost, GoogleApiConfig, apiKey, def) where
+module Web.Google.API.Rest (simpleRequest, httpRequest, GoogleApiRequest(..), methodGet, methodPost, GoogleApiConfig, def) where
 
 import Control.Applicative
 import Control.Monad.Trans.Control (MonadBaseControl)
@@ -17,9 +17,33 @@ import qualified Network.HTTP.Conduit as HTTP
 import Network.HTTP.Types
 import Data.Default
 
+data GoogleApiAuthConfig = GoogleApiUnauthenticated
+                         | GoogleApiKey BS.ByteString
+                         | GoogleApiOAuth
+                         deriving (Show, Eq)
+
+data GoogleApiConfig = GApiConf
+    { getApiAuth :: GoogleApiAuthConfig
+    , getApiEndpoint :: BS.ByteString
+    , getApiName :: BS.ByteString
+    , getApiVersion :: BS.ByteString
+    , getApiBaseUrl :: BS.ByteString
+    } deriving (Show, Eq)
+
+instance Default GoogleApiConfig where
+    def = GApiConf GoogleApiUnauthenticated "" "" "" ""
+
 class GoogleApi m where
     request :: (MonadResource m, MonadBaseControl IO m, GoogleApiRequest a b) => a -> Manager -> m (Maybe b)
     getConfig :: m GoogleApiConfig
+
+getFromConfig :: (GoogleApi m, Functor m) => (GoogleApiConfig -> a) -> m a
+getFromConfig = (<$> getConfig)
+
+class (Json.FromJSON b) => GoogleApiRequest a b | a -> b where
+    getPath :: a -> String
+    getQuery :: a -> Query
+    getMethod :: a -> Method
 
 newtype GoogleApiT m a = GoogleApiT { runGoogleApiT :: GoogleApiConfig -> m a }
 
@@ -41,45 +65,21 @@ instance Monad m => Monad (GoogleApiT m) where
         x_val <- runGoogleApiT x conf
         runGoogleApiT (f x_val) conf
 
-
-data GoogleApiConfig = GApiConf
-    { apiKey :: BS.ByteString
-    , apiEndpoint :: BS.ByteString
-    , apiName :: BS.ByteString
-    , apiVersion :: BS.ByteString
-    } deriving (Show, Eq, Read, Ord)
-
-instance Default GoogleApiConfig where
-    def = GApiConf "" "" "" ""
-
-class (Json.FromJSON b) => GoogleApiRequest a b | a -> b where
-    getPath :: a -> String
-    getQuery :: a -> Query
-    getMethod :: a -> Method
-
-{-
-class (Json.FromJSON b) => AuthenticatedGoogleApiRequest a b | a -> b where
-    getAuthedPath :: a -> String
-    getAuthedQuery :: a -> Query
-    getAuthedMethod :: a -> Method
-
-instance (AuthenticatedGoogleApiRequest a b) => GoogleApiRequest a b where
-    getPath = getAuthedPath
-    getQuery = getAuthedQuery
-    getMethod = getAuthedMethod
--}
-
 buildHttpRequest :: (GoogleApiRequest a b) => GoogleApiConfig -> a -> Request m
 buildHttpRequest api req 
     = HTTP.def { method = getMethod req
-               , host = "www.googleapis.com"
+               , host = getApiEndpoint api
                , port = 443
                , secure = True
                , path = buildPath
-               , queryString = renderQuery False . (("key", Just $ apiKey api):) . getQuery $ req
+               , queryString = renderQuery False query
                }
     where
-        buildPath = BS.intercalate "/" [apiName api, apiVersion api, C8.pack . getPath $ req] 
+        query = case getApiAuth api of
+                 GoogleApiUnauthenticated -> getQuery req
+                 GoogleApiKey key         -> ("key", Just key) : getQuery req
+                 GoogleApiOAuth           -> undefined
+        buildPath = BS.intercalate "/" [getApiName api, getApiVersion api, C8.pack . getPath $ req] 
 
 simpleRequest :: (Json.FromJSON b, GoogleApiRequest a b) => GoogleApiConfig -> a -> IO (Maybe b)
 simpleRequest api req = do
