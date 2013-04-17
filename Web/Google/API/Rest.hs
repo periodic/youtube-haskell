@@ -23,9 +23,9 @@ class GoogleApi m where
 
 newtype GoogleApiT m a = GoogleApiT { runGoogleApiT :: GoogleApiConfig -> m a }
 
-instance GoogleApi (GoogleApiT m) where
+instance Monad m => GoogleApi (GoogleApiT m) where
     getConfig = GoogleApiT (\conf -> return conf)
-    request api req manager = do
+    request req manager = do
         conf <- getConfig
         let request = buildHttpRequest conf req
         bodySource <- responseBody <$> http request manager
@@ -42,18 +42,22 @@ instance Monad m => Monad (GoogleApiT m) where
         runGoogleApiT (f x_val) conf
 
 
-data GoogleApiConfig = GApiConf {
-    apiKey :: BS.ByteString
+data GoogleApiConfig = GApiConf
+    { apiKey :: BS.ByteString
+    , apiEndpoint :: BS.ByteString
+    , apiName :: BS.ByteString
+    , apiVersion :: BS.ByteString
     } deriving (Show, Eq, Read, Ord)
 
 instance Default GoogleApiConfig where
-    def = GApiConf ""
+    def = GApiConf "" "" "" ""
 
 class (Json.FromJSON b) => GoogleApiRequest a b | a -> b where
     getPath :: a -> String
     getQuery :: a -> Query
     getMethod :: a -> Method
 
+{-
 class (Json.FromJSON b) => AuthenticatedGoogleApiRequest a b | a -> b where
     getAuthedPath :: a -> String
     getAuthedQuery :: a -> Query
@@ -63,15 +67,19 @@ instance (AuthenticatedGoogleApiRequest a b) => GoogleApiRequest a b where
     getPath = getAuthedPath
     getQuery = getAuthedQuery
     getMethod = getAuthedMethod
+-}
 
 buildHttpRequest :: (GoogleApiRequest a b) => GoogleApiConfig -> a -> Request m
-buildHttpRequest api req = HTTP.def { method = getMethod req
-                               , host = "www.googleapis.com"
-                               , port = 443
-                               , secure = True
-                               , path = C8.pack . getPath $ req
-                               , queryString = renderQuery False . (("key", Just $ apiKey api):) . getQuery $ req
-                               }
+buildHttpRequest api req 
+    = HTTP.def { method = getMethod req
+               , host = "www.googleapis.com"
+               , port = 443
+               , secure = True
+               , path = buildPath
+               , queryString = renderQuery False . (("key", Just $ apiKey api):) . getQuery $ req
+               }
+    where
+        buildPath = BS.intercalate "/" [apiName api, apiVersion api, C8.pack . getPath $ req] 
 
 simpleRequest :: (Json.FromJSON b, GoogleApiRequest a b) => GoogleApiConfig -> a -> IO (Maybe b)
 simpleRequest api req = do
