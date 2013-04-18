@@ -1,7 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
 {-# LANGUAGE FlexibleContexts #-}
-module Web.Google.API.Rest (simpleRequest, httpRequest, GoogleApiRequest(..), methodGet, methodPost, GoogleApiConfig, def) where
+module Web.Google.API.Rest ( GoogleApiRequest(..)
+                           , GoogleApiConfig(..)
+                           , GoogleApiAuthConfig(..)
+                           , GoogleApiResult(..)
+                           , def
+                           , methodGet
+                           , runApiRequest) where
 
 import Control.Applicative
 import Control.Monad.Trans.Control (MonadBaseControl)
@@ -22,34 +28,50 @@ data GoogleApiAuthConfig = GoogleApiUnauthenticated
                          | GoogleApiOAuth
                          deriving (Show, Eq)
 
+data GoogleApiResult a = Success a
+                       | Failure BS.ByteString
+                       deriving (Show)
+
+instance Functor GoogleApiResult where
+    fmap f (Success a)   = Success (f a)
+    fmap _ (Failure msg) = Failure msg
+
 data GoogleApiConfig = GApiConf
     { getApiAuth :: GoogleApiAuthConfig
     , getApiEndpoint :: BS.ByteString
-    , getApiName :: BS.ByteString
-    , getApiVersion :: BS.ByteString
-    , getApiBaseUrl :: BS.ByteString
     } deriving (Show, Eq)
 
 instance Default GoogleApiConfig where
-    def = GApiConf GoogleApiUnauthenticated "" "" "" ""
+    def = GApiConf GoogleApiUnauthenticated "www.googleapis.com"
 
+runApiRequest :: (GoogleApiRequest a b) => GoogleApiConfig -> a -> IO (GoogleApiResult b)
+runApiRequest config req =
+    withManager $ \manager -> do
+        let request = buildHttpRequest config req
+        bodySource <- responseBody <$> http request manager
+        parsedBody <- bodySource $$+- sinkParser (Json.fromJSON <$> Json.json)
+        case parsedBody of
+            Json.Success resp -> return $ Success resp
+            _                 -> return $ Failure ""
+
+class (Json.FromJSON b) => GoogleApiRequest a b | a -> b where
+    getPath :: a -> BS.ByteString
+    getQuery :: a -> Query
+    getMethod :: a -> Method
+
+{-
 class GoogleApi m where
-    request :: (MonadResource m, MonadBaseControl IO m, GoogleApiRequest a b) => a -> Manager -> m (Maybe b)
+    request :: (MonadResource m, MonadBaseControl IO m, MonadThrow m, MonadUnsafeIO m, GoogleApiRequest a b) => a -> m (Maybe b)
     getConfig :: m GoogleApiConfig
 
 getFromConfig :: (GoogleApi m, Functor m) => (GoogleApiConfig -> a) -> m a
 getFromConfig = (<$> getConfig)
 
-class (Json.FromJSON b) => GoogleApiRequest a b | a -> b where
-    getPath :: a -> String
-    getQuery :: a -> Query
-    getMethod :: a -> Method
-
 newtype GoogleApiT m a = GoogleApiT { runGoogleApiT :: GoogleApiConfig -> m a }
 
 instance Monad m => GoogleApi (GoogleApiT m) where
     getConfig = GoogleApiT (\conf -> return conf)
-    request req manager = do
+    request req = withManager $ \manager -> do
         conf <- getConfig
         let request = buildHttpRequest conf req
         bodySource <- responseBody <$> http request manager
@@ -64,6 +86,7 @@ instance Monad m => Monad (GoogleApiT m) where
     x >>= f  = GoogleApiT $ \conf -> do
         x_val <- runGoogleApiT x conf
         runGoogleApiT (f x_val) conf
+-}
 
 buildHttpRequest :: (GoogleApiRequest a b) => GoogleApiConfig -> a -> Request m
 buildHttpRequest api req 
@@ -71,7 +94,7 @@ buildHttpRequest api req
                , host = getApiEndpoint api
                , port = 443
                , secure = True
-               , path = buildPath
+               , path = getPath req
                , queryString = renderQuery False query
                }
     where
@@ -79,7 +102,6 @@ buildHttpRequest api req
                  GoogleApiUnauthenticated -> getQuery req
                  GoogleApiKey key         -> ("key", Just key) : getQuery req
                  GoogleApiOAuth           -> undefined
-        buildPath = BS.intercalate "/" [getApiName api, getApiVersion api, C8.pack . getPath $ req] 
 
 simpleRequest :: (Json.FromJSON b, GoogleApiRequest a b) => GoogleApiConfig -> a -> IO (Maybe b)
 simpleRequest api req = do

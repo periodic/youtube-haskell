@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Web.Google.YouTube ( listVideos
                           , module Web.Google.YouTube.Types
                           ) where
@@ -9,7 +10,7 @@ import Network.HTTP.Conduit ()
 import qualified Data.ByteString.Char8 as BS
 import Web.Google.YouTube.Types
 import Web.Google.YouTube.VideoParser
-import Web.Google.API.Rest
+import Web.Google.API.Rest as Rest
 
 
 instance GoogleApiRequest VideoListRequest VideoListResponse where
@@ -19,9 +20,9 @@ instance GoogleApiRequest VideoListRequest VideoListResponse where
                    ]
     getMethod = const methodGet
 
-listVideos :: GoogleApiConfig -> [VideoId] -> [VideoInfoPart] -> IO (Maybe [Video])
+listVideos :: GoogleApiConfig -> [VideoId] -> [VideoInfoPart] -> IO (GoogleApiResult [Video])
 listVideos api ids parts = do
     let req = VideoListRequest { videoId = ids, parts = parts }
-    mResp <- simpleRequest api req
+    mResp <- runApiRequest api req
     return (vlr_items `fmap` mResp)
 

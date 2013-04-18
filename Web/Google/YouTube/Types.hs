@@ -28,7 +28,7 @@ instance Show VideoInfoPart where
     show StatusPart = "status"
     show TopicDetailsPart = "topicDetails"
 
-data Video = Video { id :: String -- appears required
+data Video = Video { video_id :: String -- appears required
                    , kind :: String -- appears required
                    , etag :: String -- appears required
                    , snippet :: Maybe Snippet
