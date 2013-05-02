@@ -1,10 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Web.Google.API.Disovery where
+module Web.Google.API.Discovery where
 
 import Control.Applicative
 import Data.Map (Map)
 import Data.Aeson
 import Data.Aeson.Types (Parser)
+import Data.Default
 
 data Icons = Icons {
   directoryListItemIconsX16 :: Maybe String,
@@ -31,12 +32,35 @@ data JsonSchema = JsonSchema {
   jsonSchemaMaximum :: Maybe String,
   jsonSchemaMinimum :: Maybe String,
   jsonSchemaPattern :: Maybe String,
-  jsonSchemaProperties :: Maybe JsonSchema,
+  jsonSchemaProperties :: Maybe (Map String JsonSchema),
   jsonSchemaReadOnly :: Maybe Bool,
   jsonSchemaRepeated :: Maybe Bool,
   jsonSchemaRequired :: Maybe Bool,
   jsonSchemaType :: Maybe String
 } deriving (Show)
+
+instance Default JsonSchema where
+    def = JsonSchema {
+        jsonSchemaRef = Nothing,
+        jsonSchemaAdditionalProperties = Nothing,
+        jsonSchemaAnnotations = Nothing,
+        jsonSchemaDefault = Nothing,
+        jsonSchemaDescription = Nothing,
+        jsonSchemaEnum = Nothing,
+        jsonSchemaEnumDescriptions = Nothing,
+        jsonSchemaFormat = Nothing,
+        jsonSchemaId = Nothing,
+        jsonSchemaItems = Nothing,
+        jsonSchemaLocation = Nothing,
+        jsonSchemaMaximum = Nothing,
+        jsonSchemaMinimum = Nothing,
+        jsonSchemaPattern = Nothing,
+        jsonSchemaProperties = Nothing,
+        jsonSchemaReadOnly = Nothing,
+        jsonSchemaRepeated = Nothing,
+        jsonSchemaRequired = Nothing,
+        jsonSchemaType = Nothing
+    }
 
 instance FromJSON JsonSchema where
   parseJSON (Object v) = JsonSchema
