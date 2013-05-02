@@ -29,7 +29,7 @@ testMinimal = TestCase $ do
     testValue <- runQ . generateType $ def { jsonSchemaId = Just "FooBar" }
     assertEqual "testMinimal: " expected testValue
 
-testStringProp =
+testStringProp = TestCase $ do
     let expected = DataD []
                          (mkName "Foo")
                          []
@@ -37,8 +37,8 @@ testStringProp =
                          [(mkName "bar", NotStrict, AppT (ConT (mkName "Data.Maybe.Maybe")) (ConT (mkName "GHC.Base.String")))]]
                          []
         schema = def { jsonSchemaId = Just "Foo", jsonSchemaProperties = Just $ M.fromList [("bar", def { jsonSchemaType = Just "string" })]  }
-     in TestCase $ assertSchemaGeneratesDec expected schema
+    assertSchemaGeneratesDec expected schema
 
-tests = TestList [TestLabel "NoName" testNoName, TestLabel "Minimal" testMinimal, TestLabel "String Property" testStringProp]
+tests = TestList [TestLabel "Minimal" testMinimal, TestLabel "String Property" testStringProp]
 
 main = runTestTT tests

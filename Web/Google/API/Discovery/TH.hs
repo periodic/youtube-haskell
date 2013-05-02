@@ -24,8 +24,15 @@ generateType schema = do
             Nothing -> return []
             Just props -> mapM generateField $ M.toList props
         generateField (nameStr,schema) = do
-            name <- maybeName (jsonSchemaId schema)
-            strict <- undefined
-            typ <- undefined
-            return (name, strict, typ)
+            let name = mkName nameStr
+            typ <- getType False $ jsonSchemaType schema
+            return (name, NotStrict, typ)
 
+getType :: Bool -> Maybe String -> Q Type
+getType _ Nothing = fail "Name Required"
+getType True (Just name) = case name of
+    "string" -> return $ ConT (mkName "GHC.Base.String")
+    _        -> fail "Unsupported type."
+getType False typ = do
+    inner <- getType False typ
+    return $ AppT (ConT (mkName "Data.Maybe.Maybe")) inner
