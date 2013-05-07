@@ -17,7 +17,7 @@ generateType schema = do
     name <- maybeName (jsonSchemaId schema)
     fields <- generateFields $ jsonSchemaProperties schema
     let con = RecC name fields
-    return $ DataD [] name [] [] []
+    return $ DataD [] name [] [con] []
     where
         maybeName = maybe (fail "Name Required") (return . mkName)
         generateFields mProps = case mProps of
@@ -34,5 +34,5 @@ getType True (Just name) = case name of
     "string" -> return $ ConT (mkName "GHC.Base.String")
     _        -> fail "Unsupported type."
 getType False typ = do
-    inner <- getType False typ
+    inner <- getType True typ
     return $ AppT (ConT (mkName "Data.Maybe.Maybe")) inner

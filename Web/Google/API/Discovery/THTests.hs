@@ -25,9 +25,13 @@ assertSchemaGeneratesDec expected schema = do
     assertEqual "Generated and expected AST are not equal." expected generated
 
 testMinimal = TestCase $ do
-    let expected = DataD [] (mkName "FooBar") [] [] []
-    testValue <- runQ . generateType $ def { jsonSchemaId = Just "FooBar" }
-    assertEqual "testMinimal: " expected testValue
+    let expected = DataD []
+                         (mkName "FooBar")
+                         []
+                         [RecC (mkName "FooBar") []]
+                         []
+        schema   = def { jsonSchemaId = Just "FooBar" }
+    assertSchemaGeneratesDec expected schema
 
 testStringProp = TestCase $ do
     let expected = DataD []
@@ -39,6 +43,8 @@ testStringProp = TestCase $ do
         schema = def { jsonSchemaId = Just "Foo", jsonSchemaProperties = Just $ M.fromList [("bar", def { jsonSchemaType = Just "string" })]  }
     assertSchemaGeneratesDec expected schema
 
-tests = TestList [TestLabel "Minimal" testMinimal, TestLabel "String Property" testStringProp]
+tests = TestList [ TestLabel "Minimal" testMinimal
+                 , TestLabel "String Property" testStringProp
+                 ]
 
 main = runTestTT tests
