@@ -24,6 +24,19 @@ assertSchemaGeneratesDec expected schema = do
     generated <- runQ . generateType $ schema
     assertEqual "Generated and expected AST are not equal." expected generated
 
+assertSchemaGeneratesFields :: String -> Type -> IO ()
+assertSchemaGeneratesFields sType typ = do
+    let expected = DataD []
+                         (mkName "Foo")
+                         []
+                         [RecC (mkName "Foo")
+                         [(mkName "bar", NotStrict, typ)]]
+                         []
+        schema = def { jsonSchemaId = Just "Foo"
+                     , jsonSchemaProperties = Just $ M.fromList [("bar", def { jsonSchemaType = Just sType })]  
+                     }
+    assertSchemaGeneratesDec expected schema
+
 testMinimal = TestCase $ do
     let expected = DataD []
                          (mkName "FooBar")
@@ -34,14 +47,8 @@ testMinimal = TestCase $ do
     assertSchemaGeneratesDec expected schema
 
 testStringProp = TestCase $ do
-    let expected = DataD []
-                         (mkName "Foo")
-                         []
-                         [RecC (mkName "Foo")
-                         [(mkName "bar", NotStrict, AppT (ConT (mkName "Data.Maybe.Maybe")) (ConT (mkName "GHC.Base.String")))]]
-                         []
-        schema = def { jsonSchemaId = Just "Foo", jsonSchemaProperties = Just $ M.fromList [("bar", def { jsonSchemaType = Just "string" })]  }
-    assertSchemaGeneratesDec expected schema
+    mString <- runQ [t| Maybe String |]
+    assertSchemaGeneratesFields "string" mString
 
 tests = TestList [ TestLabel "Minimal" testMinimal
                  , TestLabel "String Property" testStringProp

@@ -31,8 +31,9 @@ generateType schema = do
 getType :: Bool -> Maybe String -> Q Type
 getType _ Nothing = fail "Name Required"
 getType True (Just name) = case name of
-    "string" -> return $ ConT (mkName "GHC.Base.String")
+    "string" -> [t| String |]
     _        -> fail "Unsupported type."
 getType False typ = do
     inner <- getType True typ
-    return $ AppT (ConT (mkName "Data.Maybe.Maybe")) inner
+    m     <- [t| Maybe |]
+    return $ AppT m inner
